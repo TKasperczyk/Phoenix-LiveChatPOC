@@ -1,4 +1,4 @@
-<div class="w-full max-w-2xl bg-white rounded-lg shadow-xl overflow-hidden">
+<div class="w-full max-w-2xl bg-white rounded-lg shadow-xl overflow-hidden" phx-hook="Chat" id="chat">
   <div class="p-4 bg-indigo-600 text-white">
     <h2 class="text-2xl font-bold">Chat Room</h2>
   </div>
@@ -6,10 +6,10 @@
     <div class="w-3/4 border-r border-gray-200 flex flex-col">
       <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4">
         <%= for message <- @messages do %>
-          <div class={"flex #{if message.user == @current_user.id, do: "justify-end"}"}>
-            <div class={"max-w-xs lg:max-w-md px-4 py-2 rounded-lg #{if message.user == @current_user.id, do: "bg-indigo-100 text-indigo-800", else: "bg-gray-100 text-gray-800"}"}>
-              <p class="font-bold text-sm"><%= message.user %> to <%= message.to %></p>
-              <p class="mt-1"><%= message.body %></p>
+          <div class={"flex #{if message.author_id == @current_user.id, do: "justify-end"}"}>
+            <div class={"max-w-xs lg:max-w-md px-4 py-2 rounded-lg #{if message.author_id == @current_user.id, do: "bg-indigo-100 text-indigo-800", else: "bg-gray-100 text-gray-800"}"}>
+              <p class="font-bold text-sm"><%= message.author_id %> to <%= message.recipient_id %></p>
+              <p class="mt-1"><%= message.contents %></p>
             </div>
           </div>
         <% end %>
@@ -17,6 +17,8 @@
       <form phx-submit="send_message" class="p-4 bg-gray-50">
         <div class="flex space-x-2">
           <input
+            id="chat-input"
+            autofocus
             autocomplete="off"
             type="text"
             name="message"
