@@ -63,6 +63,8 @@ defmodule ChatAppWeb do
       use Phoenix.LiveComponent
 
       unquote(html_helpers())
+
+      @allow_attrs ["phx-hook"]
     end
   end
 

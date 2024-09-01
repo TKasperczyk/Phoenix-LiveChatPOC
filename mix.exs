@@ -34,6 +34,7 @@ defmodule ChatApp.MixProject do
     [
       {:bcrypt_elixir, "~> 3.0"},
       {:phoenix, "~> 1.7.14"},
+      {:faker, "~> 0.18"},
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.10"},
       {:postgrex, ">= 0.0.0"},

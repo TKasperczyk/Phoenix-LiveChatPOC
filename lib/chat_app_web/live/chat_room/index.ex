@@ -57,6 +57,12 @@ defmodule ChatAppWeb.ChatRoomLive do
     {:noreply, socket |> update_presence(diff)}
   end
 
+  @impl true
+  def handle_info({:emoji_selected, emoji}, socket) do
+    IO.inspect(emoji)
+    {:noreply, assign(socket, message: socket.assigns.message <> emoji)}
+  end
+
   defp update_presence(socket, _diff) do
     online_users = Presence.list("room:lobby")
       |> Enum.map(fn {_user_id, data} ->
