@@ -4,12 +4,43 @@
   </div>
   <div class="flex h-[600px]">
     <div class="w-3/4 border-r border-gray-200 flex flex-col">
-      <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4">
-        <%= for message <- @messages do %>
-          <div class={"flex #{if message.author_id == @current_user.id, do: "justify-end"}"}>
-            <div class={"max-w-xs lg:max-w-md px-4 py-2 rounded-lg #{if message.author_id == @current_user.id, do: "bg-indigo-100 text-indigo-800", else: "bg-gray-100 text-gray-800"}"}>
-              <p class="font-bold text-sm"><%= message.author_id %> to <%= message.recipient_id %></p>
-              <p class="mt-1"><%= message.contents %></p>
+      <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-1">
+        <%= for {message, index} <- Enum.with_index(@messages) do %>
+          <% prev_message = if index > 0, do: Enum.at(@messages, index - 1), else: nil %>
+          <% next_message = if index < length(@messages) - 1, do: Enum.at(@messages, index + 1), else: nil %>
+          <% is_first_in_group = prev_message == nil || prev_message.author_id != message.author_id %>
+          <% is_last_in_group = next_message == nil || next_message.author_id != message.author_id %>
+          <% prev_message_time_diff = if prev_message, do: NaiveDateTime.diff(message.inserted_at, prev_message.inserted_at) |> abs, else: 0 %>
+          
+          <% IO.puts(prev_message_time_diff) %>
+
+          <%= if prev_message_time_diff > 12 * 3600 do %>
+            <div class="flex items-center my-4">
+              <div class="flex-grow border-t border-gray-300"></div>
+              <span class="flex-shrink mx-4 text-gray-500 text-sm">
+                <%= Calendar.strftime(message.inserted_at, "%Y-%m-%d %H:%M:%S") %>
+              </span>
+              <div class="flex-grow border-t border-gray-300"></div>
+            </div>
+          <% end %>
+
+          <div class={"flex #{if message.author_id == @current_user.id, do: "justify-end", else: "justify-start"} #{if !is_last_in_group, do: "mb-0.5", else: "mb-2"}"}>
+            <div class={
+              "max-w-xs lg:max-w-md px-4 py-2 break-words " <>
+              "#{if message.author_id == @current_user.id, do: "bg-indigo-500 text-white", else: "bg-gray-200 text-gray-800"} " <>
+              "#{cond do
+                is_first_in_group && is_last_in_group -> "rounded-2xl"
+                is_first_in_group -> "rounded-t-2xl rounded-br-2xl rounded-bl-lg"
+                is_last_in_group -> "rounded-b-2xl rounded-tr-lg rounded-tl-2xl"
+                true -> "rounded-tl-lg rounded-tr-lg rounded-br-lg rounded-bl-lg"
+              end}"
+            }>
+              <%= if is_first_in_group do %>
+                <div class={"flex justify-between items-center text-xs mb-1 #{if message.author_id == @current_user.id, do: "text-indigo-200", else: "text-gray-500"}"}>
+                  <span><%= Calendar.strftime(message.inserted_at, "%Y-%m-%d %H:%M:%S") %></span>
+                </div>
+              <% end %>
+              <p class="text-sm whitespace-pre-wrap"><%= message.contents %></p>
             </div>
           </div>
         <% end %>
@@ -25,13 +56,13 @@
             value={@message}
             phx-keyup="update_message"
             placeholder="Type a message..."
-            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            class="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
           <.live_component module={ChatAppWeb.Components.EmojiPickerComponent} id="emoji-selector-chat" />
           <button
             type="submit"
-            disabled={is_nil(@selected_user)}
-            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={is_nil(@selected_user_id)}
+            class="px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Send
           </button>
@@ -45,7 +76,7 @@
           <li
             phx-click="select_user"
             phx-value-user={user}
-            class={"cursor-pointer p-2 rounded-md hover:bg-gray-100 #{if @selected_user == user, do: "bg-indigo-100 text-indigo-800", else: ""}"}
+            class={"cursor-pointer p-2 rounded-md hover:bg-gray-100 #{if @selected_user_id == user, do: "bg-indigo-100 text-indigo-800", else: ""}"}
           >
             <%= user %>
             <%= if Enum.member?(@online_users, user) do %>
@@ -54,8 +85,8 @@
           </li>
         <% end %>
       </ul>
-      <%= if @selected_user do %>
-        <p class="mt-4 font-semibold text-indigo-600">Chatting with: <%= @selected_user %></p>
+      <%= if @selected_user_id do %>
+        <p class="mt-4 font-semibold text-indigo-600">Chatting with: <%= Integer.to_string(@selected_user_id) %></p>
       <% end %>
     </div>
   </div>

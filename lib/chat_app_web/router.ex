@@ -72,8 +72,10 @@ defmodule ChatAppWeb.Router do
       on_mount: [{ChatAppWeb.UserAuth, :ensure_authenticated}] do
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
-      live "/", ChatLive
-      live "/users", UsersLive
+      live "/", ChatLive, :index
+      live "/chat", ChatLive, :index
+      live "/chat/:user_id", ChatLive, :index
+      live "/users", UsersLive, :index
     end
   end
 
