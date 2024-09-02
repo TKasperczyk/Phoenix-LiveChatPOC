@@ -26,7 +26,7 @@ import EmojiPicker from "./hooks/emoji_picker"
 
 let Hooks = {
   EmojiPicker: EmojiPicker,
-  Chat: Chat
+  Chat: Chat,
 }
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")

@@ -18,6 +18,9 @@ defmodule ChatApp.Application do
     ]
 
     opts = [strategy: :one_for_one, name: ChatApp.Supervisor]
+
+    ChatApp.RepoTelemetry.attach()
+
     Supervisor.start_link(children, opts)
   end
 

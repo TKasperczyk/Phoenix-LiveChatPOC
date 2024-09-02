@@ -32,6 +32,12 @@ defmodule ChatApp.Accounts do
     update_user_avatar(user, %{avatar: nil})
   end
 
+  def list_users do
+    User
+    |> select([u], %{id: u.id, username: u.email, avatar: u.avatar})
+    |> Repo.all()
+  end
+
   def get_user_by_email(email) when is_binary(email) do
     Repo.get_by(User, email: email)
   end
