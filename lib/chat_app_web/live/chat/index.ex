@@ -27,7 +27,7 @@ defmodule ChatAppWeb.ChatLive do
         )
     end
 
-    users = User |> select([:id]) |> Repo.all() |> Enum.map(& &1.id)
+    users = User |> select([:id, :email, :avatar]) |> Repo.all() |> Enum.map(& %{id: &1.id, username: &1.email, avatar: &1.avatar})
     rooms = []
 
     {:ok,
@@ -120,7 +120,7 @@ defmodule ChatAppWeb.ChatLive do
 
   defp handle_user_selection(socket, user_id) do
     user_id = String.to_integer(user_id)
-    if user_id in socket.assigns.users do
+    if Enum.any?(socket.assigns.users, fn user -> user.id == user_id end) do
       messages = load_messages(socket.assigns.current_user.id, user_id)
       {:noreply, assign(socket, selected_user_id: user_id, selected_room_id: nil, messages: messages)}
     else

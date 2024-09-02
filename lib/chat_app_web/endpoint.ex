@@ -29,6 +29,11 @@ defmodule ChatAppWeb.Endpoint do
     gzip: false,
     only: ChatAppWeb.static_paths()
 
+  plug Plug.Static,
+    at: "/uploads",
+    from: Path.expand("./priv/static/uploads"),
+    gzip: false
+
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
   if code_reloading? do

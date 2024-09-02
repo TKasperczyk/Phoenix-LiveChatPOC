@@ -22,8 +22,28 @@ defmodule ChatApp.Accounts do
       nil
 
   """
+
+  def delete_avatar(user) do
+    if user.avatar do
+      file_path = Path.join("priv/static", user.avatar)
+      File.rm(file_path)
+    end
+
+    update_user_avatar(user, %{avatar: nil})
+  end
+
   def get_user_by_email(email) when is_binary(email) do
     Repo.get_by(User, email: email)
+  end
+
+  def change_user_avatar(%User{} = user, attrs \\ %{}) do
+    User.avatar_changeset(user, attrs)
+  end
+
+  def update_user_avatar(%User{} = user, attrs) do
+    user
+    |> User.avatar_changeset(attrs)
+    |> Repo.update()
   end
 
   @doc """

@@ -8,6 +8,7 @@ defmodule ChatApp.Accounts.User do
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
+    field :avatar, :string
 
     timestamps(type: :utc_datetime)
   end
@@ -35,6 +36,14 @@ defmodule ChatApp.Accounts.User do
       submitting the form), this option can be set to `false`.
       Defaults to `true`.
   """
+
+  def avatar_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:avatar])
+    |> validate_required([:avatar])
+    |> validate_format(:avatar, ~r/^\/uploads\//, message: "must be a valid upload path")
+  end
+
   def registration_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:email, :password])
