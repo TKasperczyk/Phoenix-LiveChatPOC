@@ -15,6 +15,16 @@ module.exports = {
     extend: {
       colors: {
         brand: "#FD4F00",
+      },
+      keyframes: {
+        blink: {
+          '0%': { backgroundColor: 'transparent' },
+          '50%': { backgroundColor: '#C8E6C9' },
+          '100%': { backgroundColor: 'transparent' }
+        }
+      },
+      animation: {
+        blink: 'blink 1s ease-in-out infinite',
       }
     },
   },

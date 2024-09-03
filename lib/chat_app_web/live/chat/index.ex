@@ -68,11 +68,20 @@ defmodule ChatAppWeb.ChatLive do
     {:noreply, push_event(socket, "new_message", %{})}
   end
 
+  # Used for receiving new messages on invalidation requests and for receiving the updated message after sending a message
   defp fetch(socket) do
     users = Accounts.list_users()
     messages = load_messages(socket)
     updated_messages = update_read_status(messages, socket.assigns.current_user.id)
-    assign(socket, users: users, messages: updated_messages)
+    last_read_message_ids = get_last_read_message_ids(users, updated_messages)
+    unread_user_ids = Chat.get_unread_user_ids(socket.assigns.current_user.id)
+
+    assign(socket,
+      users: users,
+      messages: updated_messages,
+      last_read_message_ids: last_read_message_ids,
+      unread_user_ids: unread_user_ids
+    )
   end
 
   defp apply_action(socket, :index, %{"user_id" => user_id}) do
@@ -80,18 +89,6 @@ defmodule ChatAppWeb.ChatLive do
   end
 
   defp apply_action(socket, :index, _params), do: socket
-
-  defp initial_assigns do
-    %{
-      rooms: [],
-      online_users: %{},
-      selected_user_id: nil,
-      selected_room_id: nil,
-      message: "",
-      subscribed_ids: [],
-      search_user: ""
-    }
-  end
 
   defp setup_subscriptions(socket) do
     Endpoint.subscribe("room:chat")
@@ -108,6 +105,17 @@ defmodule ChatAppWeb.ChatLive do
           online_at: inspect(System.system_time(:second))
         }
       )
+  end
+
+  defp get_last_read_message_ids(users, messages) do
+    Enum.map(users, fn user ->
+      last_read_message =
+        messages
+        |> Enum.filter(&(&1.read_by_user_ids |> Enum.member?(user.id)))
+        |> List.last()
+
+      %{user_id: user.id, message_id: last_read_message && last_read_message.id}
+    end)
   end
 
   defp load_messages(%{assigns: %{selected_user_id: nil}}), do: []
@@ -181,10 +189,33 @@ defmodule ChatAppWeb.ChatLive do
     if Enum.any?(socket.assigns.users, &(&1.id == user_id)) do
       messages = Chat.get_messages(socket.assigns.current_user.id, user_id)
       updated_messages = update_read_status(messages, socket.assigns.current_user.id)
-      assign(socket, selected_user_id: user_id, selected_room_id: nil, messages: updated_messages)
+      last_read_message_ids = get_last_read_message_ids(socket.assigns.users, updated_messages)
+      unread_user_ids = Chat.get_unread_user_ids(socket.assigns.current_user.id)
+
+      assign(socket,
+        selected_user_id: user_id,
+        last_read_message_ids: last_read_message_ids,
+        selected_room_id: nil,
+        messages: updated_messages,
+        unread_user_ids: unread_user_ids
+      )
     else
       socket
     end
+  end
+
+  defp initial_assigns do
+    %{
+      rooms: [],
+      online_users: %{},
+      unread_user_ids: [],
+      selected_user_id: nil,
+      selected_room_id: nil,
+      message: "",
+      subscribed_ids: [],
+      search_user: "",
+      last_read_message_ids: []
+    }
   end
 
   def watched_tags, do: ["users", "chat_messages"]

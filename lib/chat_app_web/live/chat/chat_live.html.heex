@@ -25,7 +25,7 @@
           <li
             phx-click="select_user"
             phx-value-user={user.id}
-            class={"cursor-pointer p-2 rounded-md hover:bg-gray-100 #{if @selected_user_id == user.id, do: "bg-indigo-100 text-indigo-800", else: ""}"}
+            class={"cursor-pointer p-2 rounded-md hover:bg-gray-100 #{if @selected_user_id == user.id, do: "bg-indigo-100 text-indigo-800", else: ""} #{if Enum.member?(@unread_user_ids, user.id), do: "animate-blink", else: ""}"}
           >
             <div class="flex items-center gap-3">
               <%= if user.avatar && user.avatar != "" do %>
@@ -98,32 +98,29 @@
               <% end %>
               <p class="text-sm break-words whitespace-pre-wrap overflow-hidden"><%= message.contents %></p>
             </div>
-            <%!-- 
             <div class="flex mt-1 space-x-1">
-              <%= for user <- @users, user.id != @current_user.id do %>
-                <%= if message.id == get_last_read_message_id(@last_read_message_ids, user.id) do %>
-                  <div
-                    class="w-4 h-4 rounded-full overflow-hidden border border-white shadow-sm"
-                    title={user.username}
-                  >
-                    <%= if user.avatar && user.avatar != "" do %>
-                      <img
-                        src={user.avatar}
-                        alt={user.username}
-                        class="w-full h-full object-cover"
-                      />
-                    <% else %>
-                      <div class="w-full h-full bg-gray-300 flex items-center justify-center">
-                        <span class="text-gray-600 text-[8px] font-bold">
-                          <%= String.first(user.username || "") |> String.upcase() %>
-                        </span>
-                      </div>
-                    <% end %>
-                  </div>
-                <% end %>
+              <%= for last_read_message_id <- @last_read_message_ids, last_read_message_id.message_id == message.id and last_read_message_id.user_id != @current_user.id do %>
+                <% user = Enum.find(@users, &(&1.id == last_read_message_id.user_id)) %>
+                <div
+                  class="w-6 h-6 rounded-full overflow-hidden border border-white shadow-sm"
+                  title={user.username}
+                >
+                  <%= if user.avatar && user.avatar != "" do %>
+                    <img
+                      src={user.avatar}
+                      alt={user.username}
+                      class="w-full h-full object-cover"
+                    />
+                  <% else %>
+                    <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                      <span class="text-gray-600 text-[8px] font-bold">
+                        <%= String.first(user.username || "") |> String.upcase() %>
+                      </span>
+                    </div>
+                  <% end %>
+                </div>
               <% end %>
             </div>
-            --%>
           </div>
         <% end %>
       </div>

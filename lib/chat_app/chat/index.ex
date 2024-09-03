@@ -15,6 +15,15 @@ defmodule ChatApp.Chat do
     |> Repo.get(message_id)
   end
 
+  # Get all user ids from which the current user has unread messages
+  def get_unread_user_ids(user_id) do
+    ChatMessage
+    |> where([m], m.recipient_id == ^user_id and ^user_id not in m.read_by_user_ids)
+    |> distinct([m], m.author_id) # distinct author ids
+    |> select([m], m.author_id)
+    |> Repo.all()
+  end
+
   def update_message(message, attrs) do
     message
     |> ChatMessage.changeset(attrs)
