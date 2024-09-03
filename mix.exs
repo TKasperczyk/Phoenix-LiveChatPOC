@@ -35,6 +35,7 @@ defmodule ChatApp.MixProject do
       {:bcrypt_elixir, "~> 3.0"},
       {:phoenix, "~> 1.7.14"},
       {:html_sanitize_ex, "~> 1.4"},
+      {:redix, "~> 1.1"},
       {:faker, "~> 0.18"},
       {:mogrify, "~> 0.9.3"},
       {:phoenix_ecto, "~> 4.5"},

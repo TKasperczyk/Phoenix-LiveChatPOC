@@ -2,7 +2,7 @@ defmodule ChatAppWeb.ChatLive do
   use ChatApp.LiveViewWithInvalidation
   use ChatAppWeb, :verified_routes
 
-  alias ChatApp.{Accounts, Chat, PubSub}
+  alias ChatApp.{Accounts, Chat, PubSub, CacheManager}
   alias ChatAppWeb.{Endpoint, Presence}
 
   @impl true
@@ -106,7 +106,7 @@ defmodule ChatAppWeb.ChatLive do
   end
 
   defp fetch(socket) do
-    users = Accounts.list_users()
+    users = fetch_cached_or_query("users", fn -> Accounts.list_users() end)
     messages = load_messages(socket)
     assign(socket, users: users, messages: messages)
   end
@@ -149,8 +149,21 @@ defmodule ChatAppWeb.ChatLive do
   defp load_messages(%{assigns: %{selected_user_id: nil}}), do: []
 
   defp load_messages(%{assigns: %{current_user: current_user, selected_user_id: selected_user_id}}) do
-    Chat.get_messages(current_user.id, selected_user_id)
-    |> Enum.map(&struct(&1, read_by_user_ids: &1.read_by_user_ids || []))
+    fetch_cached_or_query("messages:#{current_user.id}:#{selected_user_id}", fn ->
+      Chat.get_messages(current_user.id, selected_user_id)
+      |> Enum.map(&struct(&1, read_by_user_ids: &1.read_by_user_ids || []))
+    end)
+  end
+
+  defp fetch_cached_or_query(key, query_func) do
+    case CacheManager.get(key) do
+      nil ->
+        data = query_func.()
+        CacheManager.set(key, data)
+        data
+      cached_data ->
+        cached_data
+    end
   end
 
   defp create_and_broadcast_message(socket, message) do

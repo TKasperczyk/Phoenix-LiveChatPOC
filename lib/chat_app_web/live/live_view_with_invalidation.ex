@@ -3,14 +3,27 @@ defmodule ChatApp.LiveViewWithInvalidation do
     quote do
       use Phoenix.LiveView, layout: {ChatAppWeb.Layouts, :app}
       import ChatApp.PubSub
+      alias ChatApp.CacheManager
 
       @before_compile ChatApp.LiveViewWithInvalidation
 
       def handle_invalidate(tag, socket) do
+        IO.puts("Invalidating tag #{tag}")
         if tag in watched_tags() do
-          updated_socket = fetch(socket)
-          after_fetch(tag, updated_socket)
+          userTag = "#{socket.assigns.current_user.id}_#{tag}"
+          case CacheManager.get(userTag) do
+            nil ->
+              IO.puts("Cache miss for tag #{tag}")
+              updated_socket = fetch(socket)
+              updated_assigns = Map.delete(updated_socket.assigns, :flash)
+              CacheManager.set(userTag, updated_assigns)
+              after_fetch(userTag, updated_socket)
+            cached_data ->
+              IO.puts("Cache hit for tag #{tag}")
+              {:noreply, assign(socket, cached_data)}
+          end
         else
+          IO.puts("Non-relevant tag #{tag}")
           {:noreply, socket}
         end
       end

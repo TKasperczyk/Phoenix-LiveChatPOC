@@ -11,8 +11,10 @@ defmodule ChatApp.RepoTelemetry do
   def handle_event([:chat_app, :repo, :query], _measurements, metadata, _config) do
     %{query: query, source: source, result: result} = metadata
 
+    IO.puts("Checking if invalidation is needed for query: #{query}")
     if should_invalidate?(query, result) do
       tag = get_tag(source)
+      IO.puts("Broadcast invalidating tag #{tag}")
       ChatApp.PubSub.broadcast_invalidate(tag)
     end
   end
