@@ -3,6 +3,24 @@ defmodule ChatApp.Chat do
   alias ChatApp.Repo
   alias ChatApp.Chat.ChatMessage
 
+  def mark_message_as_read(message_id, user_id) do
+    message = get_message(message_id)
+    if user_id not in message.read_by_user_ids do
+      update_message(message, %{read_by_user_ids: [user_id | message.read_by_user_ids]})
+    end
+  end
+
+  def get_message(message_id) do
+    ChatMessage
+    |> Repo.get(message_id)
+  end
+
+  def update_message(message, attrs) do
+    message
+    |> ChatMessage.changeset(attrs)
+    |> Repo.update()
+  end
+
   def get_messages(current_user_id, other_user_id) do
     ChatMessage
     |> where([m],

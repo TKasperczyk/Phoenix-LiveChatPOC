@@ -1,4 +1,8 @@
-<div class="w-full max-w-6xl bg-white rounded-lg shadow-xl overflow-hidden" phx-hook="Chat" id="chat">
+<div
+  class="w-full max-w-6xl bg-white rounded-lg shadow-xl overflow-hidden"
+  phx-hook="Chat"
+  id="chat"
+>
   <div class="p-4 bg-indigo-600 text-white">
     <h2 class="text-2xl font-bold">Chat Room</h2>
   </div>
@@ -25,7 +29,11 @@
           >
             <div class="flex items-center gap-3">
               <%= if user.avatar && user.avatar != "" do %>
-                <img src={user.avatar} alt="User Avatar" class="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                <img
+                  src={user.avatar}
+                  alt="User Avatar"
+                  class="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                />
               <% else %>
                 <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
                   <span class="text-gray-600 font-bold text-lg">
@@ -37,7 +45,8 @@
                 <%= String.split(user.username || "", "@") |> List.first() %>
               </span>
               <%= if Enum.member?(@online_users, user.id) do %>
-                <span class="inline-block ml-auto h-2 w-2 rounded-full bg-green-500 flex-shrink-0"></span>
+                <span class="inline-block ml-auto h-2 w-2 rounded-full bg-green-500 flex-shrink-0">
+                </span>
               <% end %>
             </div>
           </li>
@@ -48,11 +57,16 @@
       <div id="chat-messages" phx-update="replace" class="flex-1 overflow-y-auto p-4 space-y-1">
         <%= for {message, index} <- Enum.with_index(@messages) do %>
           <% prev_message = if index > 0, do: Enum.at(@messages, index - 1), else: nil %>
-          <% next_message = if index < length(@messages) - 1, do: Enum.at(@messages, index + 1), else: nil %>
-          <% is_first_in_group = prev_message == nil || prev_message.author_id != message.author_id %>
+          <% next_message =
+            if index < length(@messages) - 1, do: Enum.at(@messages, index + 1), else: nil %>
+          <% is_first_in_group =
+            prev_message == nil || prev_message.author_id != message.author_id %>
           <% is_last_in_group = next_message == nil || next_message.author_id != message.author_id %>
-          <% prev_message_time_diff = if prev_message, do: NaiveDateTime.diff(message.inserted_at, prev_message.inserted_at) |> abs, else: 0 %>
-          
+          <% prev_message_time_diff =
+            if prev_message,
+              do: NaiveDateTime.diff(message.inserted_at, prev_message.inserted_at) |> abs,
+              else: 0 %>
+
           <%= if prev_message_time_diff > 12 * 3600 do %>
             <div id={"time-divider-#{message.id}"} class="flex items-center my-4">
               <div class="flex-grow border-t border-gray-300"></div>
@@ -63,7 +77,12 @@
             </div>
           <% end %>
 
-          <div id={"message-#{message.id}"} class={"flex #{if message.author_id == @current_user.id, do: "justify-end", else: "justify-start"} #{if !is_last_in_group, do: "mb-0.5", else: "mb-2"}"}>
+          <div
+            id={"message-#{message.id}"}
+            class={"flex #{if message.author_id == @current_user.id, do: "justify-end", else: "justify-start"} #{if !is_last_in_group, do: "mb-0.5", else: "mb-2"}"} 
+            visibilityId={message.id}
+            phx-hook="Visibility"
+          >
             <div class={
               "max-w-[70%] px-4 py-2 break-words " <>
               "#{if message.author_id == @current_user.id, do: "bg-indigo-500 text-white", else: "bg-gray-200 text-gray-800"} " <>
@@ -97,7 +116,10 @@
             placeholder="Type a message..."
             class="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
-          <.live_component module={ChatAppWeb.Components.EmojiPickerComponent} id="emoji-selector-chat" />
+          <.live_component
+            module={ChatAppWeb.Components.EmojiPickerComponent}
+            id="emoji-selector-chat"
+          />
           <button
             type="submit"
             disabled={is_nil(@selected_user_id)}

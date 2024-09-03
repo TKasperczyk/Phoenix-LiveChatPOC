@@ -44,6 +44,37 @@ defmodule ChatAppWeb.ChatLive do
   end
 
   @impl true
+  def handle_event("element_visible", %{"id" => id}, socket) do
+    case Integer.parse(id) do
+      {message_id, _} ->
+        current_user_id = socket.assigns.current_user.id
+
+        new_messages = Enum.map(socket.assigns.messages, fn msg ->
+          if msg.id == message_id and current_user_id not in msg.read_by_user_ids do
+            %{msg | read_by_user_ids: [current_user_id | msg.read_by_user_ids]}
+          else
+            msg
+          end
+        end)
+
+        if new_messages != socket.assigns.messages do
+          send(self(), {:update_read_status, message_id, current_user_id})
+          {:noreply, assign(socket, messages: new_messages)}
+        else
+          {:noreply, socket}
+        end
+
+      :error ->
+        {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("element_not_visible", %{"id" => _id}, socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_info({:new_message, message}, socket) do
     new_messages = update_messages_if_relevant(message, socket)
 
@@ -62,6 +93,12 @@ defmodule ChatAppWeb.ChatLive do
   @impl true
   def handle_info({:emoji_selected, emoji}, socket) do
     {:noreply, update(socket, :message, &(&1 <> emoji))}
+  end
+
+  @impl true
+  def handle_info({:update_read_status, message_id, user_id}, socket) do
+    Chat.mark_message_as_read(message_id, user_id)
+    {:noreply, socket}
   end
 
   def after_fetch(_tag, socket) do
@@ -113,6 +150,7 @@ defmodule ChatAppWeb.ChatLive do
 
   defp load_messages(%{assigns: %{current_user: current_user, selected_user_id: selected_user_id}}) do
     Chat.get_messages(current_user.id, selected_user_id)
+    |> Enum.map(&struct(&1, read_by_user_ids: &1.read_by_user_ids || []))
   end
 
   defp create_and_broadcast_message(socket, message) do
