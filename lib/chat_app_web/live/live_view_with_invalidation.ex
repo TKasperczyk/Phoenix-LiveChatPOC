@@ -1,7 +1,7 @@
 defmodule ChatApp.LiveViewWithInvalidation do
-  defmacro __using__(opts) do
+  defmacro __using__(_opts) do
     quote do
-      use Phoenix.LiveView, unquote(opts)
+      use Phoenix.LiveView, layout: {ChatAppWeb.Layouts, :app}
       import ChatApp.PubSub
 
       @before_compile ChatApp.LiveViewWithInvalidation

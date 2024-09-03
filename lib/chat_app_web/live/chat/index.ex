@@ -127,7 +127,6 @@ defmodule ChatAppWeb.ChatLive do
         socket
         |> assign(message: "")
         |> update(:messages, &(&1 ++ [%{chat_message | author: socket.assigns.current_user}]))
-        |> push_event("focus_message_input", %{})
 
       {:error, _changeset} ->
         socket
