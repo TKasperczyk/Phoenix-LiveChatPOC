@@ -3,34 +3,33 @@ defmodule ChatApp.LiveViewWithInvalidation do
     quote do
       use Phoenix.LiveView, layout: {ChatAppWeb.Layouts, :app}
       import ChatApp.PubSub
-      alias ChatApp.CacheManager
+      alias ChatApp.{Cache}
 
       @before_compile ChatApp.LiveViewWithInvalidation
 
       def handle_invalidate(tag, socket) do
-        IO.puts("Invalidating tag #{tag}")
+        IO.puts("Checking invalidation for tag: #{tag}")
         if tag in watched_tags() do
-          userTag = "#{socket.assigns.current_user.id}_#{tag}"
-          case CacheManager.get(userTag) do
-            nil ->
-              IO.puts("Cache miss for tag #{tag}")
-              updated_socket = fetch(socket)
-              updated_assigns = Map.delete(updated_socket.assigns, :flash)
-              CacheManager.set(userTag, updated_assigns)
-              after_fetch(userTag, updated_socket)
-            cached_data ->
-              IO.puts("Cache hit for tag #{tag}")
-              {:noreply, assign(socket, cached_data)}
-          end
+          IO.puts("Invalidating cache for tag: #{tag}")
+          invalidate_cache(tag, socket)
+          updated_socket = fetch(socket)
+          after_fetch(tag, updated_socket)
         else
-          IO.puts("Non-relevant tag #{tag}")
+          IO.puts("Ignoring invalidation for tag: #{tag}")
           {:noreply, socket}
         end
       end
 
+      def invalidate_cache(tag, socket) do
+        user_id = socket.assigns.current_user.id
+        pattern = "#{Cache.KeyGenerator.generate("#{tag}", user_id)}*"
+        IO.puts("Invalidating cache by pattern: #{pattern}")
+        Cache.Manager.clear_by_pattern(pattern)
+      end
+
       def after_fetch(_tag, socket), do: {:noreply, socket}
 
-      defoverridable handle_invalidate: 2, after_fetch: 2
+      defoverridable handle_invalidate: 2, after_fetch: 2, invalidate_cache: 2
 
       def handle_info({:invalidate, tag}, socket) do
         handle_invalidate(tag, socket)

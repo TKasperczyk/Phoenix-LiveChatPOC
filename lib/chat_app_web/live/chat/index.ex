@@ -2,7 +2,7 @@ defmodule ChatAppWeb.ChatLive do
   use ChatApp.LiveViewWithInvalidation
   use ChatAppWeb, :verified_routes
 
-  alias ChatApp.{Accounts, Chat, PubSub, CacheManager}
+  alias ChatApp.{Accounts, Chat, PubSub, Cache}
   alias ChatAppWeb.{Endpoint, Presence}
 
   @impl true
@@ -149,19 +149,23 @@ defmodule ChatAppWeb.ChatLive do
   defp load_messages(%{assigns: %{selected_user_id: nil}}), do: []
 
   defp load_messages(%{assigns: %{current_user: current_user, selected_user_id: selected_user_id}}) do
-    fetch_cached_or_query("messages:#{current_user.id}:#{selected_user_id}", fn ->
+    cache_key = Cache.KeyGenerator.generate("chat_messages", current_user.id, recipient_id: selected_user_id)
+    fetch_cached_or_query(cache_key, fn ->
       Chat.get_messages(current_user.id, selected_user_id)
       |> Enum.map(&struct(&1, read_by_user_ids: &1.read_by_user_ids || []))
     end)
   end
 
   defp fetch_cached_or_query(key, query_func) do
-    case CacheManager.get(key) do
+    IO.puts("Fetching cached data for key: #{key}")
+    case Cache.Manager.get(key) do
       nil ->
+        IO.puts("Cache miss for key: #{key}")
         data = query_func.()
-        CacheManager.set(key, data)
+        Cache.Manager.set(key, data)
         data
       cached_data ->
+        IO.puts("Cache hit for key: #{key}")
         cached_data
     end
   end

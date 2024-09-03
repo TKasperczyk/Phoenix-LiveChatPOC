@@ -13,8 +13,8 @@ defmodule ChatApp.Application do
       {DNSCluster, query: Application.get_env(:chat_app, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: ChatApp.PubSub},
       {Finch, name: ChatApp.Finch},
-      ChatApp.CacheManager,
-      ChatApp.CacheInvalidationService,
+      ChatApp.Cache.Manager,
+      ChatApp.Cache.InvalidationService,
       ChatAppWeb.Presence,
       ChatAppWeb.Endpoint
     ]

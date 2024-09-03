@@ -1,9 +1,10 @@
-defmodule ChatApp.CacheInvalidationService do
+defmodule ChatApp.Cache.InvalidationService do
   use GenServer
-  alias ChatApp.CacheManager
+  alias ChatApp.Cache
 
   @refresh_interval :timer.minutes(5)
 
+  @spec start_link(any()) :: :ignore | {:error, any()} | {:ok, pid()}
   def start_link(_) do
     GenServer.start_link(__MODULE__, %{})
   end
@@ -27,6 +28,6 @@ defmodule ChatApp.CacheInvalidationService do
     # This is a placeholder. You'll need to implement the logic to refresh all cached data.
     # This could involve fetching fresh data for all tags and updating the cache.
     # For now, we'll just clear the cache to force a refresh on next access.
-    CacheManager.clear_all()
+    Cache.Manager.clear_by_pattern("*")
   end
 end

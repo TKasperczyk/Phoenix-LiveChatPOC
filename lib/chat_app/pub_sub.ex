@@ -1,6 +1,6 @@
 defmodule ChatApp.PubSub do
   alias Phoenix.PubSub
-  alias ChatApp.CacheManager
+  alias ChatApp.Cache.Manager
 
   def subscribe(topic) do
     PubSub.subscribe(ChatApp.PubSub, topic)
@@ -11,7 +11,7 @@ defmodule ChatApp.PubSub do
   end
 
   def broadcast_invalidate(tag) do
-    CacheManager.delete(tag)
+    Manager.delete(tag)
     broadcast("invalidations", {:invalidate, tag})
   end
 end
