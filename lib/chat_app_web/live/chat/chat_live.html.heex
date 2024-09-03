@@ -79,20 +79,18 @@
 
           <div
             id={"message-#{message.id}"}
-            class={"flex #{if message.author_id == @current_user.id, do: "justify-end", else: "justify-start"} #{if !is_last_in_group, do: "mb-0.5", else: "mb-2"}"} 
-            visibilityId={message.id}
-            phx-hook="Visibility"
+            class={"flex flex-col #{if message.author_id == @current_user.id, do: "items-end", else: "items-start"} #{if !is_last_in_group, do: "mb-0.5", else: "mb-2"}"}
           >
             <div class={
-              "max-w-[70%] px-4 py-2 break-words " <>
-              "#{if message.author_id == @current_user.id, do: "bg-indigo-500 text-white", else: "bg-gray-200 text-gray-800"} " <>
-              "#{cond do
-                is_first_in_group && is_last_in_group -> "rounded-2xl"
-                is_first_in_group -> "rounded-t-2xl rounded-br-2xl rounded-bl-lg"
-                is_last_in_group -> "rounded-b-2xl rounded-tr-lg rounded-tl-2xl"
-                true -> "rounded-tl-lg rounded-tr-lg rounded-br-lg rounded-bl-lg"
-              end}"
-            }>
+          "max-w-[70%] px-4 py-2 break-words " <>
+          "#{if message.author_id == @current_user.id, do: "bg-indigo-500 text-white", else: "bg-gray-200 text-gray-800"} " <>
+          "#{cond do
+            is_first_in_group && is_last_in_group -> "rounded-2xl"
+            is_first_in_group -> "rounded-t-2xl rounded-br-2xl rounded-bl-lg"
+            is_last_in_group -> "rounded-b-2xl rounded-tr-lg rounded-tl-2xl"
+            true -> "rounded-tl-lg rounded-tr-lg rounded-br-lg rounded-bl-lg"
+          end}"
+        }>
               <%= if is_first_in_group do %>
                 <div class={"flex justify-between items-center text-xs mb-1 #{if message.author_id == @current_user.id, do: "text-indigo-200", else: "text-gray-500"}"}>
                   <span><%= Calendar.strftime(message.inserted_at, "%Y-%m-%d %H:%M:%S") %></span>
@@ -100,6 +98,32 @@
               <% end %>
               <p class="text-sm break-words whitespace-pre-wrap overflow-hidden"><%= message.contents %></p>
             </div>
+            <%!-- 
+            <div class="flex mt-1 space-x-1">
+              <%= for user <- @users, user.id != @current_user.id do %>
+                <%= if message.id == get_last_read_message_id(@last_read_message_ids, user.id) do %>
+                  <div
+                    class="w-4 h-4 rounded-full overflow-hidden border border-white shadow-sm"
+                    title={user.username}
+                  >
+                    <%= if user.avatar && user.avatar != "" do %>
+                      <img
+                        src={user.avatar}
+                        alt={user.username}
+                        class="w-full h-full object-cover"
+                      />
+                    <% else %>
+                      <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                        <span class="text-gray-600 text-[8px] font-bold">
+                          <%= String.first(user.username || "") |> String.upcase() %>
+                        </span>
+                      </div>
+                    <% end %>
+                  </div>
+                <% end %>
+              <% end %>
+            </div>
+            --%>
           </div>
         <% end %>
       </div>

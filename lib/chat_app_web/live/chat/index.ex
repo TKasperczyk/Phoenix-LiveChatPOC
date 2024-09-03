@@ -44,37 +44,6 @@ defmodule ChatAppWeb.ChatLive do
   end
 
   @impl true
-  def handle_event("element_visible", %{"id" => id}, socket) do
-    case Integer.parse(id) do
-      {message_id, _} ->
-        current_user_id = socket.assigns.current_user.id
-
-        new_messages = Enum.map(socket.assigns.messages, fn msg ->
-          if msg.id == message_id and current_user_id not in msg.read_by_user_ids do
-            %{msg | read_by_user_ids: [current_user_id | msg.read_by_user_ids]}
-          else
-            msg
-          end
-        end)
-
-        if new_messages != socket.assigns.messages do
-          send(self(), {:update_read_status, message_id, current_user_id})
-          {:noreply, assign(socket, messages: new_messages)}
-        else
-          {:noreply, socket}
-        end
-
-      :error ->
-        {:noreply, socket}
-    end
-  end
-
-  @impl true
-  def handle_event("element_not_visible", %{"id" => _id}, socket) do
-    {:noreply, socket}
-  end
-
-  @impl true
   def handle_info({:new_message, message}, socket) do
     new_messages = update_messages_if_relevant(message, socket)
 
@@ -95,12 +64,6 @@ defmodule ChatAppWeb.ChatLive do
     {:noreply, update(socket, :message, &(&1 <> emoji))}
   end
 
-  @impl true
-  def handle_info({:update_read_status, message_id, user_id}, socket) do
-    Chat.mark_message_as_read(message_id, user_id)
-    {:noreply, socket}
-  end
-
   def after_fetch(_tag, socket) do
     {:noreply, push_event(socket, "new_message", %{})}
   end
@@ -108,7 +71,8 @@ defmodule ChatAppWeb.ChatLive do
   defp fetch(socket) do
     users = Accounts.list_users()
     messages = load_messages(socket)
-    assign(socket, users: users, messages: messages)
+    updated_messages = update_read_status(messages, socket.assigns.current_user.id)
+    assign(socket, users: users, messages: updated_messages)
   end
 
   defp apply_action(socket, :index, %{"user_id" => user_id}) do
@@ -153,6 +117,22 @@ defmodule ChatAppWeb.ChatLive do
     |> Enum.map(&struct(&1, read_by_user_ids: &1.read_by_user_ids || []))
   end
 
+  defp update_read_status(messages, current_user_id) do
+    messages_to_update = Enum.filter(messages, &(current_user_id not in &1.read_by_user_ids))
+
+    Enum.each(messages_to_update, fn msg ->
+      Chat.mark_message_as_read(msg.id, current_user_id)
+    end)
+
+    Enum.map(messages, fn msg ->
+      if current_user_id not in msg.read_by_user_ids do
+        %{msg | read_by_user_ids: [current_user_id | msg.read_by_user_ids]}
+      else
+        msg
+      end
+    end)
+  end
+
   defp create_and_broadcast_message(socket, message) do
     attrs = %{
       contents: HtmlSanitizeEx.basic_html(message),
@@ -176,6 +156,7 @@ defmodule ChatAppWeb.ChatLive do
       (socket.assigns.messages ++ [message])
       |> Enum.sort_by(& &1.inserted_at, {:asc, NaiveDateTime})
       |> Enum.take(-50)
+      |> update_read_status(socket.assigns.current_user.id)
     else
       socket.assigns.messages
     end
@@ -199,7 +180,8 @@ defmodule ChatAppWeb.ChatLive do
 
     if Enum.any?(socket.assigns.users, &(&1.id == user_id)) do
       messages = Chat.get_messages(socket.assigns.current_user.id, user_id)
-      assign(socket, selected_user_id: user_id, selected_room_id: nil, messages: messages)
+      updated_messages = update_read_status(messages, socket.assigns.current_user.id)
+      assign(socket, selected_user_id: user_id, selected_room_id: nil, messages: updated_messages)
     else
       socket
     end
